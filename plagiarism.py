@@ -199,12 +199,12 @@ if __name__=="__main__":
 
     # write the csv file
     result_file = open(result_file_name, "w")
-    result_file.write("file1, file2, similarity\n"+csv_result['all'])
+    result_file.write(csv_result['all'])
     result_file.close()
     logger.info('complete to save a file in "{}"'.format(result_file_name))
 
     result_file = open(summary_file_name, "w")
-    result_file.write("file1, file2, similarity\n"+csv_result['summary'])
+    result_file.write(csv_result['summary'])
     result_file.close()
     logger.info('complete to save a file in "{}"'.format(summary_file_name))
 

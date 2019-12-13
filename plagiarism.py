@@ -75,7 +75,7 @@ def compare_two_document(src, dst):
     return src.jaccard(dst)
 
 def compare_file(current_name, remove_pattern, file_list, lifo_queue):
-    csv_result_list = []
+    csv_result_list = [] 
     src_file = open(current_name, "r")
     src = prepare_the_word(src_file.read(), remove_pattern, template)
     for compare_name in file_list:
@@ -83,9 +83,9 @@ def compare_file(current_name, remove_pattern, file_list, lifo_queue):
             continue
         dst_file = open(compare_name, "r")
         dst = prepare_the_word(dst_file.read(), remove_pattern, template)
-        current_name = current_name.split(os.path.sep)[-1]
-        compare_name = compare_name.split(os.path.sep)[-1]
-        csv_result_list += [(current_name, compare_name,
+        src_name = current_name.split(os.path.sep)[-1]
+        dst_name = compare_name.split(os.path.sep)[-1]
+        csv_result_list += [(src_name, dst_name, 
             compare_two_document(src, dst))]
         dst_file.close()
     src_file.close()
@@ -103,7 +103,7 @@ def compare_file_list(file_list, remove_pattern, template):
 
     logger.info("compare files start")
     for current_name in tqdm(file_list):
-        proc = Process(target=compare_file,
+        proc = Process(target=compare_file, 
                 args=(current_name, remove_pattern, file_list, lifo_queue))
         procs.append(proc)
         proc.start()
@@ -111,7 +111,10 @@ def compare_file_list(file_list, remove_pattern, template):
     for proc in procs:
         proc.join()
 
-    result = ""
+    csv_result = {
+            "all":"",
+            "summary":{}
+            }
     temp_list = []
 
     logger.info("get data from LIFO queue")
@@ -122,19 +125,28 @@ def compare_file_list(file_list, remove_pattern, template):
     temp_list.sort(key = lambda item : item[0])
 
     logger.info("make an csv format string")
+    csv_result['all'] = "cmp1, cmp2, similarity\n"
     for row in temp_list:
         current_name = row[0]
         compare_name = row[1]
         similarity = row[2]
-        result += "{}, {}, {}\n".format(current_name, compare_name, similarity)
+        csv_result['summary'].setdefault(current_name, -1)
+        csv_result['summary'][current_name] = max(csv_result['summary'][current_name], similarity)
+        csv_result['all'] += "{}, {}, {}\n".format(current_name, compare_name, similarity)
+
+    temp = "id, max similarity"
+    for key in csv_result['summary']:
+        temp += "{} {}\n".format(key, csv_result['summary'][key])
+    csv_result['summary'] = temp
     manager.shutdown()
-    return result
+    return csv_result
 
 if __name__=="__main__":
     C_COMMENT_REMOVE_PATTERN = "(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|(//.*)"
 
-    template_file_name = 'template.txt'
+    summary_file_name = 'summary.csv' 
     result_file_name = 'result.csv'
+    template_file_name = None
     remove_pattern = C_COMMENT_REMOVE_PATTERN
     files_path = os.getcwd()
 
@@ -143,10 +155,14 @@ if __name__=="__main__":
     parser.add_argument('-o', '--output', type=str, help="set output file")
     parser.add_argument('-p', '--path', type=str, help="set compare files path")
     parser.add_argument('-r', '--remove', type=str, help="set remove patterns(regex) in file")
+    parser.add_argument('-s', '--summary', type=str, help="set summary file")
 
     args = parser.parse_args()
     if args.template != None:
         template_file_name = args.template
+        logger.info('current template file "{}"'.format(template_file_name))
+    if args.summary != None:
+        summary_file_name = args.summary
     if args.output != None:
         result_file_name = args.output
     if args.path != None:
@@ -158,15 +174,16 @@ if __name__=="__main__":
         files_path += '/'
 
 
-    logger.info('current template file "{}"'.format(template_file_name))
+    logger.info('current summary file "{}"'.format(template_file_name))
     logger.info('current output file "{}"'.format(result_file_name))
     logger.info('current files path "{}"'.format(files_path))
 
     current_file = os.path.split(__file__)[-1]
-    exception_file_list = [current_file, template_file_name, result_file_name]
+    exception_file_list = [current_file, 
+            template_file_name,
+            result_file_name,
+            summary_file_name]
 
-    if os.path.isfile(result_file_name):
-        os.remove(result_file_name)
     file_list = [_file \
             for _file in os.listdir(files_path) \
             if os.path.isfile(os.path.join(files_path, _file))]
@@ -174,14 +191,20 @@ if __name__=="__main__":
             for _file in file_list \
             if not _file in exception_file_list]
 
-    template = ""
-    if os.path.isfile(template_file_name):
+    template = None
+    if template_file_name != None and os.path.isfile(template_file_name):
         template = load_template_text(template_file_name, remove_pattern)
 
-    csv_result_string = compare_file_list(file_list, remove_pattern, template)
+    csv_result = compare_file_list(file_list, remove_pattern, template)
 
     # write the csv file
     result_file = open(result_file_name, "w")
-    result_file.write("file1, file2, similarity\n"+csv_result_string)
+    result_file.write("file1, file2, similarity\n"+csv_result['all'])
     result_file.close()
     logger.info('complete to save a file in "{}"'.format(result_file_name))
+
+    result_file = open(summary_file_name, "w")
+    result_file.write("file1, file2, similarity\n"+csv_result['summary'])
+    result_file.close()
+    logger.info('complete to save a file in "{}"'.format(summary_file_name))
+

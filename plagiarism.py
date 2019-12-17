@@ -125,18 +125,18 @@ def compare_file_list(file_list, remove_pattern, template):
     temp_list.sort(key = lambda item : item[0])
 
     logger.info("make an csv format string")
-    csv_result['all'] = "cmp1, cmp2, similarity\n"
+    csv_result['all'] = "cmp1,cmp2,similarity\n"
     for row in temp_list:
         current_name = row[0]
         compare_name = row[1]
         similarity = row[2]
         csv_result['summary'].setdefault(current_name, -1)
         csv_result['summary'][current_name] = max(csv_result['summary'][current_name], similarity)
-        csv_result['all'] += "{}, {}, {}\n".format(current_name, compare_name, similarity)
+        csv_result['all'] += "{},{},{}\n".format(current_name, compare_name, similarity)
 
-    temp = "id, max similarity\n"
+    temp = "id,max similarity\n"
     for key in csv_result['summary']:
-        temp += "{}, {}\n".format(key, csv_result['summary'][key])
+        temp += "{},{}\n".format(key, csv_result['summary'][key])
     csv_result['summary'] = temp
     manager.shutdown()
     return csv_result

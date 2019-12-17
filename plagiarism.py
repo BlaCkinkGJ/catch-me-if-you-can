@@ -134,9 +134,9 @@ def compare_file_list(file_list, remove_pattern, template):
         csv_result['summary'][current_name] = max(csv_result['summary'][current_name], similarity)
         csv_result['all'] += "{}, {}, {}\n".format(current_name, compare_name, similarity)
 
-    temp = "id, max similarity"
+    temp = "id, max similarity\n"
     for key in csv_result['summary']:
-        temp += "{} {}\n".format(key, csv_result['summary'][key])
+        temp += "{}, {}\n".format(key, csv_result['summary'][key])
     csv_result['summary'] = temp
     manager.shutdown()
     return csv_result

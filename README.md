@@ -43,5 +43,6 @@ optional arguments:
 
 ```
 - [ ] Support a feature of creating the graph
+- [ ] Support GPU arithmetic
 - [ ] Add the function which has the cosine similarity analyzes
 ```

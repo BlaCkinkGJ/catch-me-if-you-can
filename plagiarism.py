@@ -2,8 +2,13 @@
 import os, sys
 import logging, argparse
 import re
-from multiprocessing import Process
+
+import networkx as nx
+import matplotlib.pyplot as plt
+
+import multiprocessing
 from multiprocessing.managers import BaseManager
+
 from queue import LifoQueue
 from tqdm import tqdm
 from nltk.tokenize import word_tokenize
@@ -75,7 +80,7 @@ def compare_two_document(src, dst):
     return src.jaccard(dst)
 
 def compare_file(current_name, remove_pattern, file_list, lifo_queue):
-    csv_result_list = [] 
+    csv_result_list = []
     src_file = open(current_name, "r")
     src = prepare_the_word(src_file.read(), remove_pattern, template)
     for compare_name in file_list:
@@ -85,11 +90,14 @@ def compare_file(current_name, remove_pattern, file_list, lifo_queue):
         dst = prepare_the_word(dst_file.read(), remove_pattern, template)
         src_name = current_name.split(os.path.sep)[-1]
         dst_name = compare_name.split(os.path.sep)[-1]
-        csv_result_list += [(src_name, dst_name, 
+        csv_result_list += [(src_name, dst_name,
             compare_two_document(src, dst))]
         dst_file.close()
     src_file.close()
     lifo_queue.put(csv_result_list)
+
+def compare_file_helper(data_set):
+    compare_file(data_set[0], data_set[1], data_set[2], data_set[3])
 
 def compare_file_list(file_list, remove_pattern, template):
     data_manager.register('LifoQueue', LifoQueue)
@@ -99,17 +107,14 @@ def compare_file_list(file_list, remove_pattern, template):
 
     lifo_queue = manager.LifoQueue()
 
-    procs = []
+    p = multiprocessing.Pool(multiprocessing.cpu_count())
 
     logger.info("compare files start")
-    for current_name in tqdm(file_list):
-        proc = Process(target=compare_file, 
-                args=(current_name, remove_pattern, file_list, lifo_queue))
-        procs.append(proc)
-        proc.start()
+    data_set = [(current_name, remove_pattern, file_list, lifo_queue) for current_name in file_list]
+    p.map(compare_file_helper, tqdm(data_set))
+    p.close()
+    p.join()
 
-    for proc in procs:
-        proc.join()
 
     csv_result = {
             "all":"",
@@ -142,20 +147,23 @@ def compare_file_list(file_list, remove_pattern, template):
     return csv_result
 
 if __name__=="__main__":
+    ### PREDEFINED VALUES ###
     C_COMMENT_REMOVE_PATTERN = "(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|(//.*)"
 
-    summary_file_name = 'summary.csv' 
+    summary_file_name = 'summary.csv'
     result_file_name = 'result.csv'
     template_file_name = None
     remove_pattern = C_COMMENT_REMOVE_PATTERN
     files_path = os.getcwd()
 
+    ### ARGUMENT SETTING ###
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--template', type=str, help="set template file")
-    parser.add_argument('-o', '--output', type=str, help="set output file")
-    parser.add_argument('-p', '--path', type=str, help="set compare files path")
-    parser.add_argument('-r', '--remove', type=str, help="set remove patterns(regex) in file")
-    parser.add_argument('-s', '--summary', type=str, help="set summary file")
+    parser.add_argument('-t', '--template', metavar='<template file name>', type=str, help="set template file")
+    parser.add_argument('-o', '--output', metavar='<output file name>', type=str, help="set output file")
+    parser.add_argument('-p', '--path', metavar='<working path>', type=str, help="set compare files path")
+    parser.add_argument('-r', '--remove', metavar='<remove regex pattern>', type=str, help="set remove patterns(regex) in file")
+    parser.add_argument('-s', '--summary', metavar='<summary file name>', type=str, help="set summary file")
+    parser.add_argument('-g', '--graph', metavar='<graph weight(0.0 ~ 1.0)>', type=float, help="show associativity graph and set weight(0.0 ~ 1.0)")
 
     args = parser.parse_args()
     if args.template != None:
@@ -174,12 +182,13 @@ if __name__=="__main__":
         files_path += '/'
 
 
-    logger.info('current summary file "{}"'.format(template_file_name))
+    logger.info('current summary file "{}"'.format(summary_file_name))
     logger.info('current output file "{}"'.format(result_file_name))
     logger.info('current files path "{}"'.format(files_path))
 
+    ### GET FILE ###
     current_file = os.path.split(__file__)[-1]
-    exception_file_list = [current_file, 
+    exception_file_list = [current_file,
             template_file_name,
             result_file_name,
             summary_file_name]
@@ -195,9 +204,10 @@ if __name__=="__main__":
     if template_file_name != None and os.path.isfile(template_file_name):
         template = load_template_text(template_file_name, remove_pattern)
 
+    ### RUN PLAGIARISM DETECTOR ###
     csv_result = compare_file_list(file_list, remove_pattern, template)
 
-    # write the csv file
+    ### WRITE_CSV_FILE ###
     result_file = open(result_file_name, "w")
     result_file.write(csv_result['all'])
     result_file.close()
@@ -208,3 +218,19 @@ if __name__=="__main__":
     result_file.close()
     logger.info('complete to save a file in "{}"'.format(summary_file_name))
 
+
+    ### DRAW THE GRAPH ###
+    if args.graph != None:
+        logger.info('graph generate start')
+        node_list = [_value.split(',')[0] \
+                for _value in csv_result['summary'].split('\n')[1:] \
+                if _value != "" and float(_value.split(',')[1]) > args.graph]
+        edge_list = [tuple(_value.split(',')[0:2]) \
+                for _value in csv_result['all'].split('\n')[1:] \
+                if _value != "" and float(_value.split(',')[2]) > args.graph]
+
+        G = nx.MultiGraph()
+        G.add_nodes_from(node_list)
+        G.add_edges_from(edge_list)
+        nx.draw_spring(G, with_labels=True)
+        plt.show()

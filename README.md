@@ -12,6 +12,8 @@ This program was made by `python3`. So, you must be installed `python3`. And you
 tqdm == 4.40.2
 nltk == 3.4.5
 datasketch == 1.5.0
+matplotlib == 3.1.2
+networkx == 2.4
 ```
 
 ## Details

@@ -25,20 +25,24 @@ This program finds the plagiarism by using the MinHash algorithms.
 You can use this program like below(also can see this document with `./plagiarism.py -h`)
 
 ```bash
-usage: plagiarism.py [-h] [-t TEMPLATE] [-o OUTPUT] [-p PATH] [-r REMOVE]
-                     [-s SUMMARY]
+usage: plagiarism.py [-h] [-t <template file name>] [-o <output file name>]
+                     [-p <working path>] [-r <remove regex pattern>]
+                     [-s <summary file name>] [-g <graph weight0.0 ~ 1.0>]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -t TEMPLATE, --template TEMPLATE
+  -t <template file name>, --template <template file name>
                         set template file
-  -o OUTPUT, --output OUTPUT
+  -o <output file name>, --output <output file name>
                         set output file
-  -p PATH, --path PATH  set compare files path
-  -r REMOVE, --remove REMOVE
+  -p <working path>, --path <working path>
+                        set compare files path
+  -r <remove regex pattern>, --remove <remove regex pattern>
                         set remove patterns(regex) in file
-  -s SUMMARY, --summary SUMMARY
+  -s <summary file name>, --summary <summary file name>
                         set summary file
+  -g <graph weight(0.0 ~ 1.0)>, --graph <graph weight(0.0 ~ 1.0)>
+                        show associativity graph and set weight(0.0 ~ 1.0)
 ```
 
 ## TODO

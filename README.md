@@ -42,8 +42,6 @@ optional arguments:
 ## TODO
 
 ```
-- [ ] Support a feature of creating the graph
-- [ ] Support GPU arithmetic
+- [x] Support a feature of creating the graph
 - [ ] Add the function which has the cosine similarity analyzes
-- [ ] Support python module `codecs`
 ```

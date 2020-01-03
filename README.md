@@ -50,4 +50,5 @@ optional arguments:
 ```
 - [x] Support a feature of creating the graph
 - [ ] Add the function which has the cosine similarity analyzes
+- [ ] Add the feature of plagiarism detect which based on c functions
 ```

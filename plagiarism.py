@@ -26,6 +26,7 @@ class data_manager(BaseManager):
     pass
 
 def clear_indent(source):
+    source = source.replace('\r\n', '\n')
     source = source.split('\n')
     result = []
     for line in source:

@@ -79,7 +79,7 @@ def prepare_the_word(text, remove_pattern, template):
 def compare_two_document(src, dst):
     return src.jaccard(dst)
 
-def compare_file(current_name, remove_pattern, file_list, lifo_queue):
+def compare_file(current_name, remove_pattern, file_list, lifo_queue, template):
     csv_result_list = []
     src_file = open(current_name, "r")
     src = prepare_the_word(src_file.read(), remove_pattern, template)
@@ -97,7 +97,7 @@ def compare_file(current_name, remove_pattern, file_list, lifo_queue):
     lifo_queue.put(csv_result_list)
 
 def compare_file_helper(data_set):
-    compare_file(data_set[0], data_set[1], data_set[2], data_set[3])
+    compare_file(data_set[0], data_set[1], data_set[2], data_set[3], data_set[4])
 
 def compare_file_list(file_list, remove_pattern, template):
     data_manager.register('LifoQueue', LifoQueue)
@@ -110,7 +110,7 @@ def compare_file_list(file_list, remove_pattern, template):
     p = multiprocessing.Pool(multiprocessing.cpu_count())
 
     logger.info("compare files start")
-    data_set = [(current_name, remove_pattern, file_list, lifo_queue) for current_name in file_list]
+    data_set = [(current_name, remove_pattern, file_list, lifo_queue, template) for current_name in file_list]
     p.map(compare_file_helper, tqdm(data_set))
     p.close()
     p.join()

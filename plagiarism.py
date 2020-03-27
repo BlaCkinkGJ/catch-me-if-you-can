@@ -197,10 +197,11 @@ if __name__=="__main__":
     file_list = [_file \
             for _file in os.listdir(files_path) \
             if os.path.isfile(os.path.join(files_path, _file))]
+    """
     file_list = [files_path+_file \
             for _file in file_list \
             if not _file in exception_file_list]
-
+    """
     template = None
     if template_file_name != None and os.path.isfile(template_file_name):
         template = load_template_text(template_file_name, remove_pattern)

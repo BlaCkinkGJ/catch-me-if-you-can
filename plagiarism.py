@@ -132,7 +132,7 @@ def prepare_the_word(text, remove_pattern, template):
     minhash = MinHash()
     for word in text:
         minhash.update(word.encode("utf8"))
-    return minhash
+    return (text, minhash)
 
 
 ##
@@ -159,15 +159,17 @@ def compare_two_document(src, dst):
 def compare_file(current_name, remove_pattern, file_list, lifo_queue, template):
     csv_result_list = []
     src_file = open(current_name, "r")
-    src = prepare_the_word(src_file.read(), remove_pattern, template)
+    src_text, src = prepare_the_word(src_file.read(), remove_pattern, template)
     for compare_name in file_list:
         if compare_name == current_name:
             continue
         dst_file = open(compare_name, "r")
-        dst = prepare_the_word(dst_file.read(), remove_pattern, template)
+        dst_text, dst = prepare_the_word(dst_file.read(), remove_pattern, template)
         src_name = current_name.split(os.path.sep)[-1]
         dst_name = compare_name.split(os.path.sep)[-1]
-        csv_result_list += [(src_name, dst_name, compare_two_document(src, dst))]
+        if not (len(src_text) == 0 or len(dst_text) == 0):
+            ratio = compare_two_document(src, dst)
+        csv_result_list += [(src_name, dst_name, ratio)]
         dst_file.close()
     src_file.close()
     lifo_queue.put(csv_result_list)

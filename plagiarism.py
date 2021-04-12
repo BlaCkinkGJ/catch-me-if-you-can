@@ -4,9 +4,6 @@ import logging
 import argparse
 import re
 
-import networkx as nx
-import matplotlib.pyplot as plt
-
 import multiprocessing
 from multiprocessing.managers import BaseManager
 
@@ -355,6 +352,8 @@ if __name__ == "__main__":
 
     # Draw the similarity graph
     if args.graph is not None:
+        import networkx as nx
+        import matplotlib.pyplot as plt
         logger.info("graph generate start")
         node_list = [
             _value.split(",")[0]

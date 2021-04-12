@@ -329,7 +329,7 @@ if __name__ == "__main__":
     ]
 
     file_list = [
-        _file
+        os.path.join(files_path, _file)
         for _file in os.listdir(files_path)
         if os.path.isfile(os.path.join(files_path, _file))
     ]

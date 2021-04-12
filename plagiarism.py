@@ -167,6 +167,7 @@ def compare_file(current_name, remove_pattern, file_list, lifo_queue, template):
         dst_text, dst = prepare_the_word(dst_file.read(), remove_pattern, template)
         src_name = current_name.split(os.path.sep)[-1]
         dst_name = compare_name.split(os.path.sep)[-1]
+        ratio = 0
         if not (len(src_text) == 0 or len(dst_text) == 0):
             ratio = compare_two_document(src, dst)
         csv_result_list += [(src_name, dst_name, ratio)]
